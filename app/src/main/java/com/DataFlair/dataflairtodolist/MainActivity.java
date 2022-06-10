@@ -73,7 +73,37 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-  
-  
-    
+    public void deleteTask(View view) {
+        View parent = (View) view.getParent();
+        TextView taskTextView = (TextView) parent.findViewById(R.id.title_task);
+        String task = String.valueOf(taskTextView.getText());
+        SQLiteDatabase db = taskHelper.getWritableDatabase();
+        db.delete(TaskContract.TaskEntry.TABLE, TaskContract.TaskEntry.COL_TASK_TITLE + " = ?", new String[]{task});
+        db.close();
+        updateUI();
+    }
+
+    private void updateUI() {
+        ArrayList<String> taskList = new ArrayList<>();
+        SQLiteDatabase db = taskHelper.getReadableDatabase();
+        Cursor cursor = db.query(TaskContract.TaskEntry.TABLE,
+                new String[]{TaskContract.TaskEntry._ID, TaskContract.TaskEntry.COL_TASK_TITLE},
+                null, null, null, null, null);
+        while (cursor.moveToNext()) {
+            int idx = cursor.getColumnIndex(TaskContract.TaskEntry.COL_TASK_TITLE);
+            taskList.add(cursor.getString(idx));
+        }
+
+        if (arrAdapter == null) {
+            arrAdapter = new ArrayAdapter<>(this, R.layout.todo_task, R.id.title_task, taskList);
+            TaskList.setAdapter(arrAdapter);
+        } else {
+            arrAdapter.clear();
+            arrAdapter.addAll(taskList);
+            arrAdapter.notifyDataSetChanged();
+        }
+
+        cursor.close();
+        db.close();
+    }
 }
